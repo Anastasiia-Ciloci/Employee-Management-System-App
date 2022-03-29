@@ -1,0 +1,20 @@
+{
+  "name": "employee-management-system-app",
+  "version": "1.0.0",
+  "description": "A command-line application that allows to manage a company's employee database",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Anastasiia-Ciloci/Employee-Management-System-App.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Anastasiia-Ciloci/Employee-Management-System-App/issues"
+  },
+  "homepage": "https://github.com/Anastasiia-Ciloci/Employee-Management-System-App#readme"
+}
