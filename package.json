@@ -16,5 +16,9 @@
   "bugs": {
     "url": "https://github.com/Anastasiia-Ciloci/Employee-Management-System-App/issues"
   },
-  "homepage": "https://github.com/Anastasiia-Ciloci/Employee-Management-System-App#readme"
+  "homepage": "https://github.com/Anastasiia-Ciloci/Employee-Management-System-App#readme",
+  "dependencies": {
+    "inquirer": "^8.2.2",
+    "mysql": "^2.18.1"
+  }
 }
