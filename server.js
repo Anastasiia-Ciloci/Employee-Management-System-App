@@ -34,38 +34,105 @@ const promptQs = () => {
     })
     .then((response) => {
       if (response.option === "View All Employees") {
-        return viewAllEmpl();
+        return getAllEmpl().then((employees) => {
+          console.log("");
+          console.table(employees);
+        });
       } else if (response.option === "Add Employee") {
         return addEmpl();
       } else if (response.option === "Update Employee Role") {
         return updateEmplRole();
       } else if (response.option === "View All Roles") {
-        return viewAllRoles();
+        return getAllRoles().then((roles) => {
+          console.log("");
+          console.table(roles);
+        });
       } else if (response.option === "Add Role") {
         return addRole();
       } else if (response.option === "View All Departments") {
-        return viewAllDeptm();
+        return getAllDeptm().then((departments) => {
+          console.log("");
+          console.table(departments);
+        }); //viewAllDeptm();
       } else if (response.option === "Add Department") {
         return addDeptm();
       } else if (response.option === "Exit") {
         exit();
-        console.log("program exited");
+        //console.log("program exited");
       }
     });
 };
 
-const viewAllEmpl = () => {
-  db.query("SELECT * FROM employee", function (err, results) {
-    if (err) {
-      console.log(err);
-    }
-    console.log("");
-    console.table(results);
-    init();
+const getAllEmpl = () => {
+  return new Promise((resolve, reject) => {
+    db.query("SELECT * FROM employee", function (err, results) {
+      if (err) {
+        reject(err);
+      }
+      resolve(results);
+    });
   });
 };
 
-const addEmpl = () => {
+const getAllRoles = () => {
+  return new Promise((resolve, reject) => {
+    db.query("SELECT * FROM roles", function (err, results) {
+      if (err) {
+        console.log(err);
+        reject(err);
+      }
+      resolve(results);
+    });
+  });
+};
+
+const getAllManagers = () => {
+  return new Promise((resolve, reject) => {
+    db.query(
+      "SELECT * FROM employee WHERE manager_id IS NULL",
+      function (err, results) {
+        if (err) {
+          console.log(err);
+          reject(err);
+        }
+        resolve(results);
+      }
+    );
+  });
+};
+
+const getAllDeptm = () => {
+  return new Promise((resolve, reject) => {
+    db.query("SELECT * FROM department", function (err, results) {
+      if (err) {
+        console.log(err);
+        reject(err);
+      }
+      resolve(results);
+    });
+  });
+};
+
+const updateEmplRole = () => {
+  return inquirer
+    .prompt([
+      {
+        type: "list",
+        name: "roleUpdate",
+        message: "Which employee's role do you want to update?",
+        choices: [`SELECT * FROM roles`],
+        //choices from sql table
+      },
+    ])
+    .then((answer) => {
+      console.log("role has been updated, will get from sql");
+    });
+};
+
+const addEmpl = async () => {
+  let roles = await getAllRoles();
+  let managers = await getAllManagers();
+
   return inquirer
     .prompt([
       {
@@ -79,69 +146,45 @@ const addEmpl = () => {
         message: "What is the employee's last name?",
       },
       {
-        type: "rawlist",
-        name: "empRole",
+        type: "list",
+        name: "role",
         message: "What is the employee's role?",
-        choices: [
-          `SELECT * FROM role`,
-          //choices from db sql table
-        ],
+        choices: roles.map((role) => {
+          return role.title;
+        }),
       },
       {
         type: "list",
-        name: "emplManager",
+        name: "manager",
         message: "Who is the employee's manager?",
-        choices: [
-          "Tolik",
-          "Vitalik",
-          "Vit'ka",
-          "none",
-          // I guess i need a table of managers + none
-        ],
+        choices: ["None"].concat(
+          managers.map((manager) => {
+            return manager.first_name + " " + manager.last_name;
+          })
+        ),
       },
     ])
-    .then((answer) => {
-      db.query(
-        "SELECT * FROM employee(first_name, last_name,role_id) VALUES(?, ?,?)",
-        function (err, results) {
-          if (err) {
-            console.log(err);
-          }
-          console.log("");
-          console.table(results);
-          console.log(`employee ${employee}added. `);
-          //when "none" return NULL from manager id
+    .then((employee) => {
+      let role_id = roles.find((role) => role.title === employee.role).id;
+      let manager_id =
+        employee.manager === "None"
+          ? null
+          : managers.find(
+              (manager) =>
+                manager.first_name === employee.manager.split(" ")[0] &&
+                manager.last_name === employee.manager.split(" ")[1]
+            ).id;
+
+      var query = `INSERT INTO employee(first_name, last_name,role_id, manager_id) VALUES('${employee.firstName}', '${employee.lastName}', ${role_id}, ${manager_id})`;
+
+      db.query(query, function (err, results) {
+        if (err) {
+          console.log(err);
         }
-      );
+      });
     });
 };
 
-const updateEmplRole = () => {
-  return inquirer
-    .prompt([
-      {
-        type: "list",
-        name: "roleUpdate",
-        message: "Which employee's role do you want to update?",
-        choices: [`SELECT * FROM role`],
-        //choices from sql table
-      },
-    ])
-    .then((answer) => {
-      console.log("role has been updated, will get from sql");
-    });
-};
-
-const viewAllRoles = () => {
-  db.query("SELECT * FROM roles", function (err, results) {
-    if (err) {
-      console.log(err);
-    }
-    console.log("");
-    console.table(results);
-    init();
-  });
-};
 const addRole = () => {
   return inquirer
     .prompt([
@@ -172,22 +215,11 @@ const addRole = () => {
     });
 };
 
-const viewAllDeptm = () => {
-  db.query("SELECT * FROM department", function (err, results) {
-    if (err) {
-      console.log(err);
-    }
-    console.log(" ");
-    console.table(results);
-    init();
-  });
-};
-
 const addDeptm = () => {
   return inquirer
     .prompt({
       type: "input",
-      name: "newDepartment",
+      name: "name",
       message: "What is the name of the department?",
     })
     .then((answer) => {
@@ -200,7 +232,7 @@ const exit = () => {
 };
 
 function init() {
-  promptQs().then(init);
+  promptQs().then(init).catch(init);
 }
 
 init();
