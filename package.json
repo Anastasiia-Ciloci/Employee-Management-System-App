@@ -18,7 +18,8 @@
   },
   "homepage": "https://github.com/Anastasiia-Ciloci/Employee-Management-System-App#readme",
   "dependencies": {
+    "console.table": "^0.10.0",
     "inquirer": "^8.2.2",
-    "mysql": "^2.18.1"
+    "mysql2": "^2.3.3"
   }
 }

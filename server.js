@@ -1,15 +1,20 @@
 const inquirer = require("inquirer");
-// const mysql = require("mysql2");
-// const consoleTbl = require("console.table");
+const mysql = require("mysql2");
+//const consoleTbl = require("console.table");
 
-// const db = mysql.createConnection(
-//   {
-//     user: "root",
-//     database: "employee_db",
-//   },
-//   console.log(`Connected to the employee_db database.`)
-// );
+const db = mysql.createConnection(
+  {
+    host: "localhost",
+    user: "root",
+    password: "",
+    database: "employee_db",
+  },
+  console.log(`Connected to the employee_db database.`)
+);
 
+// db.query("SELECT * FROM employee", function (err, results) {
+//   console.log(results);
+// });
 const promptQs = () => {
   return inquirer
     .prompt({
@@ -29,7 +34,7 @@ const promptQs = () => {
     })
     .then((response) => {
       if (response.option === "View All Employees") {
-        return viewAllDeptm();
+        return viewAllEmpl();
       } else if (response.option === "Add Employee") {
         return addEmpl();
       } else if (response.option === "Update Employee Role") {
@@ -39,7 +44,7 @@ const promptQs = () => {
       } else if (response.option === "Add Role") {
         return addRole();
       } else if (response.option === "View All Departments") {
-        return viewAllEmpl();
+        return viewAllDeptm();
       } else if (response.option === "Add Department") {
         return addDeptm();
       } else if (response.option === "Exit") {
@@ -48,11 +53,16 @@ const promptQs = () => {
       }
     });
 };
-//promptQs();
 
 const viewAllEmpl = () => {
-  console.log("Will return data of employees from sql");
-  //i need to pull sql table of empl
+  db.query("SELECT * FROM employee", function (err, results) {
+    if (err) {
+      console.log(err);
+    }
+    console.log("");
+    console.table(results);
+    init();
+  });
 };
 
 const addEmpl = () => {
@@ -69,14 +79,12 @@ const addEmpl = () => {
         message: "What is the employee's last name?",
       },
       {
-        type: "list",
+        type: "rawlist",
         name: "empRole",
         message: "What is the employee's role?",
         choices: [
+          `SELECT * FROM role`,
           //choices from db sql table
-          "bu",
-          "ga",
-          "gu",
         ],
       },
       {
@@ -93,8 +101,18 @@ const addEmpl = () => {
       },
     ])
     .then((answer) => {
-      console.log("employee added. will get from sql");
-      //when "none" return NULL from manager id
+      db.query(
+        "SELECT * FROM employee(first_name, last_name,role_id) VALUES(?, ?,?)",
+        function (err, results) {
+          if (err) {
+            console.log(err);
+          }
+          console.log("");
+          console.table(results);
+          console.log(`employee ${employee}added. `);
+          //when "none" return NULL from manager id
+        }
+      );
     });
 };
 
@@ -105,7 +123,7 @@ const updateEmplRole = () => {
         type: "list",
         name: "roleUpdate",
         message: "Which employee's role do you want to update?",
-        choices: ["intern", "student"],
+        choices: [`SELECT * FROM role`],
         //choices from sql table
       },
     ])
@@ -115,8 +133,14 @@ const updateEmplRole = () => {
 };
 
 const viewAllRoles = () => {
-  console.log("will get the roles from sql table roles");
-  //need to pull all roles from sql
+  db.query("SELECT * FROM roles", function (err, results) {
+    if (err) {
+      console.log(err);
+    }
+    console.log("");
+    console.table(results);
+    init();
+  });
 };
 const addRole = () => {
   return inquirer
@@ -147,9 +171,16 @@ const addRole = () => {
       console.log("role has been added");
     });
 };
+
 const viewAllDeptm = () => {
-  console.log("will add from sql all department");
-  //need to pull sql table employees
+  db.query("SELECT * FROM department", function (err, results) {
+    if (err) {
+      console.log(err);
+    }
+    console.log(" ");
+    console.table(results);
+    init();
+  });
 };
 
 const addDeptm = () => {
@@ -167,8 +198,6 @@ const addDeptm = () => {
 const exit = () => {
   process.exit();
 };
-
-const returnToPromtQs = () => {};
 
 function init() {
   promptQs().then(init);
