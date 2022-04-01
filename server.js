@@ -58,25 +58,27 @@ const promptQs = () => {
         return addDeptm();
       } else if (response.option === "Exit") {
         exit();
-        //console.log("program exited");
       }
     });
 };
 
 const getAllEmpl = () => {
   return new Promise((resolve, reject) => {
-    db.query("SELECT * FROM employee", function (err, results) {
-      if (err) {
-        reject(err);
+    db.query(
+      "SELECT e.id, e.first_name, e.last_name, r.title, d.department_name AS department, r.salary, CONCAT(m.first_name,' ', m.last_name) as manager FROM employee e JOIN roles r ON e.role_id = r.id JOIN department d ON r.department_id = d.id LEFT JOIN employee m ON m.id = e.manager_id",
+      function (err, results) {
+        if (err) {
+          reject(err);
+        }
+        resolve(results);
       }
-      resolve(results);
-    });
+    );
   });
 };
 
 const getAllRoles = () => {
   return new Promise((resolve, reject) => {
-    db.query("SELECT * FROM roles", function (err, results) {
+    db.query("SELECT * FROM roles ", function (err, results) {
       if (err) {
         console.log(err);
         reject(err);
@@ -105,7 +107,6 @@ const getAllDeptm = () => {
   return new Promise((resolve, reject) => {
     db.query("SELECT * FROM department", function (err, results) {
       if (err) {
-        console.log(err);
         reject(err);
       }
       resolve(results);
@@ -185,33 +186,45 @@ const addEmpl = async () => {
     });
 };
 
-const addRole = () => {
+const addRole = async () => {
+  let departments = await getAllDeptm();
+  //console.log(departments);
+
   return inquirer
     .prompt([
       {
         type: "input",
-        name: "newRole",
+        name: "title",
         message: "What is the name of the role?",
       },
       {
         type: "input",
-        name: "roleSalary",
+        name: "salary",
         message: "What is the salary of the role?",
       },
       {
         type: "list",
-        name: "roleDeptm",
+        name: "departm",
         message: "Which department does the role belong to?",
-        choices: [
-          //roles from db tables
-          "Service",
-          "Engineer",
-          "Bubblic",
-        ],
+        choices: departments.map((departm) => {
+          return departm.department_name;
+        }),
       },
     ])
-    .then((answer) => {
-      console.log("role has been added");
+    .then((role) => {
+      let departId = departments.find(
+        (d) => d.department_name === role.departm
+      ).id;
+
+      var query = `INSERT INTO roles(title, salary, department_id) VALUES('${role.title}', ${role.salary}, ${departId})`;
+
+      db.query(query, function (err, results) {
+        if (err) {
+          console.log(err);
+        }
+      });
+
+      console.log(`role has been added`);
     });
 };
 
@@ -223,7 +236,14 @@ const addDeptm = () => {
       message: "What is the name of the department?",
     })
     .then((answer) => {
-      console.log("department added");
+      var query = `INSERT INTO department(department_name) VALUES('${answer.name}')`;
+
+      db.query(query, function (err, results) {
+        if (err) {
+          console.log(err);
+        }
+      });
+      console.log(`department ${answer.name} added`);
     });
 };
 
